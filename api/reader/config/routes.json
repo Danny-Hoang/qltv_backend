@@ -41,6 +41,14 @@
       }
     },
     {
+      "method": "POST",
+      "path": "/addReader",
+      "handler": "reader.addReader",
+      "config": {
+        "policies": []
+      }
+    },
+    {
       "method": "PUT",
       "path": "/readers/:id",
       "handler": "reader.update",

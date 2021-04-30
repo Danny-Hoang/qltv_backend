@@ -41,6 +41,14 @@
       }
     },
     {
+      "method": "POST",
+      "path": "/addPublisher",
+      "handler": "publisher.addPublisher",
+      "config": {
+        "policies": []
+      }
+    },
+    {
       "method": "PUT",
       "path": "/publishers/:id",
       "handler": "publisher.update",

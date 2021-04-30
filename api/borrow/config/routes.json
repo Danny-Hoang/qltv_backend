@@ -26,12 +26,36 @@
     },
     {
       "method": "POST",
+      "path": "/findTickets",
+      "handler": "borrow.findTickets",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/borrows",
       "handler": "borrow.create",
       "config": {
         "policies": []
       }
     },
+    {
+        "method": "POST",
+        "path": "/sendPhieuMuon",
+        "handler": "borrow.sendPhieuMuon",
+        "config": {
+          "policies": []
+        }
+      },
+    {
+        "method": "POST",
+        "path": "/sendPhieuTra",
+        "handler": "borrow.sendPhieuTra",
+        "config": {
+          "policies": []
+        }
+      },
     {
       "method": "PUT",
       "path": "/borrows/:id",

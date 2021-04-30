@@ -15,8 +15,8 @@
       "type": "integer"
     },
     "book": {
-      "model": "book",
-      "via": "instances"
+      "via": "instances",
+      "model": "book"
     },
     "importDate": {
       "type": "datetime"

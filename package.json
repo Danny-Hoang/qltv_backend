@@ -11,6 +11,7 @@
   },
   "devDependencies": {},
   "dependencies": {
+    "dayjs": "^1.10.4",
     "knex": "0.21.18",
     "mysql": "2.18.1",
     "sqlstring": "^2.3.2",
