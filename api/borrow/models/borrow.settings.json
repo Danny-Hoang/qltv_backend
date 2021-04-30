@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "borrows",
+  "info": {
+    "name": "borrow",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "reader": {
+      "model": "reader",
+      "via": "borrows"
+    },
+    "date": {
+      "type": "datetime"
+    },
+    "borrow_books": {
+      "via": "borrow",
+      "collection": "borrow-book"
+    }
+  }
+}

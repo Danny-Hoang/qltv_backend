@@ -1,0 +1,61 @@
+{
+  "kind": "collectionType",
+  "collectionName": "readers",
+  "info": {
+    "name": "reader",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "birth": {
+      "type": "date"
+    },
+    "course": {
+      "type": "string"
+    },
+    "type": {
+      "type": "integer"
+    },
+    "address": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "avatar": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "endDate": {
+      "type": "date"
+    },
+    "lop": {
+      "model": "lop",
+      "via": "readers"
+    },
+    "borrows": {
+      "via": "reader",
+      "collection": "borrow"
+    },
+    "active": {
+      "type": "boolean"
+    }
+  }
+}

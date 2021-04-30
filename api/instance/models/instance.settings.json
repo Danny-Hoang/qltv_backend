@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "instances",
+  "info": {
+    "name": "instance",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "status": {
+      "type": "integer"
+    },
+    "book": {
+      "via": "instances",
+      "model": "book"
+    },
+    "importDate": {
+      "type": "datetime"
+    },
+    "index": {
+      "type": "integer"
+    },
+    "borrow_books": {
+      "via": "instance",
+      "collection": "borrow-book"
+    }
+  }
+}

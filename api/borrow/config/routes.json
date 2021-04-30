@@ -1,0 +1,76 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/borrows",
+      "handler": "borrow.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/borrows/count",
+      "handler": "borrow.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/borrows/:id",
+      "handler": "borrow.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/findTickets",
+      "handler": "borrow.findTickets",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/borrows",
+      "handler": "borrow.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+        "method": "POST",
+        "path": "/sendPhieuMuon",
+        "handler": "borrow.sendPhieuMuon",
+        "config": {
+          "policies": []
+        }
+      },
+    {
+        "method": "POST",
+        "path": "/sendPhieuTra",
+        "handler": "borrow.sendPhieuTra",
+        "config": {
+          "policies": []
+        }
+      },
+    {
+      "method": "PUT",
+      "path": "/borrows/:id",
+      "handler": "borrow.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/borrows/:id",
+      "handler": "borrow.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

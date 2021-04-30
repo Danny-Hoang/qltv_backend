@@ -1,0 +1,21 @@
+{
+  "kind": "singleType",
+  "collectionName": "caches",
+  "info": {
+    "name": "cache",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "instance": {
+      "type": "biginteger"
+    },
+    "book": {
+      "type": "biginteger"
+    }
+  }
+}
