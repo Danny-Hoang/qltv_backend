@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "books",
+  "info": {
+    "name": "book",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "publishYear": {
+      "type": "integer"
+    },
+    "price": {
+      "type": "integer"
+    },
+    "totalPage": {
+      "type": "integer"
+    },
+    "size": {
+      "type": "string"
+    },
+    "category": {
+      "model": "category",
+      "via": "books"
+    },
+    "publisher": {
+      "model": "publisher",
+      "via": "books"
+    },
+    "instances": {
+      "via": "book",
+      "collection": "instance"
+    }
+  }
+}

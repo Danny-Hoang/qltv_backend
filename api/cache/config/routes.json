@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/cache",
+      "handler": "cache.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/cache",
+      "handler": "cache.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/cache",
+      "handler": "cache.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

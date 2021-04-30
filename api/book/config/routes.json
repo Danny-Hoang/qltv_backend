@@ -1,0 +1,100 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/books",
+      "handler": "book.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/findBooks",
+      "handler": "book.findBooks",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/getAllBorrowBooks",
+      "handler": "book.getAllBorrowBooks",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/findInstances",
+      "handler": "book.findInstances",
+      "config": {
+        "policies": []
+      }
+    }, 
+    {
+	"method": "POST",
+      	"path": "/getSummaryData",
+      	"handler": "book.getSummaryData",
+      	"config": {
+        	"policies": []
+      	}
+    },
+    {
+	"method": "POST",
+      	"path": "/getBorrowingBooks",
+      	"handler": "book.getBorrowingBook",
+      	"config": {
+        	"policies": []
+      	}
+    },
+    {
+      "method": "GET",
+      "path": "/bookByInstance",
+      "handler": "book.bookByInstance",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/books/count",
+      "handler": "book.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/books/:id",
+      "handler": "book.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/books",
+      "handler": "book.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/books/:id",
+      "handler": "book.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/books/:id",
+      "handler": "book.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

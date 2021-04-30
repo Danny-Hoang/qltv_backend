@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "borrow_books",
+  "info": {
+    "name": "borrow_book",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "returnDate": {
+      "type": "datetime"
+    },
+    "borrow": {
+      "model": "borrow",
+      "via": "borrow_books"
+    },
+    "instance": {
+      "model": "instance",
+      "via": "borrow_books"
+    }
+  }
+}
