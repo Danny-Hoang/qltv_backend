@@ -1,5 +1,5 @@
 const SqlString = require('sqlstring');
-const  { sanityArrayNum, sanityOrder, sanityString, escapeString } = require('../../helpers')
+const { sanityArrayNum, sanityOrder, sanityString, escapeString } = require('../../helpers')
 
 const findBooks = async (ctx, others) => {
 
@@ -8,7 +8,7 @@ const findBooks = async (ctx, others) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity', 'updated_at','barcode'].includes(colName)) {
+        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity', 'updated_at', 'barcode'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
 
@@ -38,9 +38,15 @@ const findBooks = async (ctx, others) => {
     let _pgSize = isNaN(pageSize) ? 10 : parseInt(pageSize);
     const off_set = (_page - 1) * _pgSize;
 
-    const titleFilter = title ? `
-        b.title LIKE ${sanityString(title)}
-    ` : ''
+    const bookID = Number(title) || 0;
+
+    let titleFilter = ''
+    if (bookID) {
+        titleFilter = `b.id = ${bookID}`
+    } else {
+        titleFilter = title ? `b.title LIKE ${sanityString(title)}` : ''
+    }
+
     const codeFilter = code ? `b.code LIKE ${code}` : '';
     const authorFilter = author ? `b.author LIKE ${author}` : ''
 

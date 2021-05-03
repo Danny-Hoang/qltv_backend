@@ -146,6 +146,14 @@
     },
     {
       "method": "POST",
+      "path": "/addInstances",
+      "handler": "book.addInstances",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/books",
       "handler": "book.create",
       "config": {

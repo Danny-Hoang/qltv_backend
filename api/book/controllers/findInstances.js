@@ -1,6 +1,6 @@
 
 const SqlString = require('sqlstring');
-const { sanityArrayNum, sanityOrder, sanityString, escapeString } = require('../../helpers')
+const { sanityArrayNum, sanityOrder, sanityString, escapeString, sanityNumber } = require('../../helpers')
 
 const findInstances = async (ctx) => {
 
@@ -23,7 +23,7 @@ const findInstances = async (ctx) => {
     }
 
 
-    let { categories, author, code, publishers, bookTitle, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
+    let { categories, author, code, publishers, bookTitle, bookID, page = 1, pageSize = 10, order, sort } = ctx.request.body;
 
 
     order = sanityOrder(order);
@@ -56,6 +56,8 @@ const findInstances = async (ctx) => {
         titleFilter = bookTitle ? `b.title LIKE ${sanityString(bookTitle)}` : '';
     }
 
+    const bookIDFilter = bookID ? `b.id = ${sanityNumber(bookID)}`: ''
+
     // const titleFilter = title ? `
     //     MATCH (b.title) AGAINST (${SqlString.escape(title)} IN NATURAL LANGUAGE MODE) 
     // ` : ''
@@ -68,7 +70,7 @@ const findInstances = async (ctx) => {
     const publisherFilter = publishers && publishers.length ? `p.id IN (${publishers.join(',')})` : '';
 
 
-    const finalFilter = [titleFilter, codeFilter, authorFilter, categoryFilter, publisherFilter]
+    const finalFilter = [titleFilter, codeFilter, authorFilter, categoryFilter, publisherFilter, bookIDFilter]
         .filter(e => e)
         .join(' AND ');
 
@@ -76,33 +78,46 @@ const findInstances = async (ctx) => {
 
     const query1 = `
 
-    SELECT t.id, b.id as bookID, b.title as bookTitle, b.code, 
-        p.id as  publisherID, p.name as publisher, c.id as categoryID, c.name as category, b.publishYear, 
-        b.author, b.price, b.size, b.totalPage, t.index, brb.lastBorrowDate, brb.lastReturnDate, brb.borrowCount,
-        (
-            CASE WHEN (brb.borrowCount = 0 OR ISNULL(brb.lastBorrowDate) OR (brb.lastReturnDate IS NOT NULL AND brb.lastReturnDate > brb.lastBorrowDate))
-                THEN -1
-                ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(brb.lastBorrowDate, '+00:00','+07:00')))
-            END
-        ) as days_on_loan
-
+    SELECT t.id as instanceID,  t.index, x.lastBorrowDate, x.lastReturnDate, x.borrowCount, r.name as lastReader, r.id as lastReaderID, 
+    (
+        CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 THEN null
+        ELSE r.id
+        END
+    ) as readerID,
+    (
+        CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 THEN null
+        ELSE r.name
+        END
+    ) as reader,
+        b.id as bookID, b.title as bookTitle, b.code, b.publishYear, b.author, b.price, b.size, b.totalPage, 
+        p.name as publisher, c.name as category, c.id as categoryID, p.id as publisherID,
+       
+    (
+        CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
+            THEN -1
+            ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
+        END
+    ) as days_on_loan
     FROM instances t 
-    INNER JOIN books b
+    LEFT JOIN 
+    (SELECT bb.instance as instanceID,  
+        COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
+        FROM borrow_books bb
+        INNER JOIN borrows br
+            ON bb.borrow = br.id
+        GROUP BY bb.instance
+    )x
+        ON t.id = x.instanceID
+    LEFT JOIN borrows br
+        ON x.lastBorrowDate = br.date
+    LEFT JOIN readers r 
+        ON r.id = br.reader
+    INNER JOIN books b 
         ON b.id = t.book
     LEFT JOIN categories c 
         ON b.category = c.id
     LEFT JOIN publishers p 
-        ON b.publisher = p.id
-
-    LEFT JOIN (
-        SELECT bb.instance as instanceID, bb.borrow as borrowID, 
-            COUNT(*) as borrowCount, MAX(b.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-        FROM borrow_books bb
-        INNER JOIN borrows b
-            ON bb.borrow = b.id
-        GROUP BY instance
-    ) brb
-    ON t.id = brb.instanceID
+        ON p.id = b.publisher
         
 
             
@@ -117,28 +132,30 @@ const findInstances = async (ctx) => {
 
     const query2 = `
     SELECT COUNT(*) as total_items
-
     FROM instances t 
-    INNER JOIN books b
+    LEFT JOIN 
+    (SELECT bb.instance as instanceID,  
+        COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
+        FROM borrow_books bb
+        INNER JOIN borrows br
+            ON bb.borrow = br.id
+        GROUP BY bb.instance
+    )x
+        ON t.id = x.instanceID
+    LEFT JOIN borrows br
+        ON x.lastBorrowDate = br.date
+    LEFT JOIN readers r 
+        ON r.id = br.reader
+    INNER JOIN books b 
         ON b.id = t.book
     LEFT JOIN categories c 
         ON b.category = c.id
     LEFT JOIN publishers p 
-        ON b.publisher = p.id
+        ON p.id = b.publisher
+        
 
-    LEFT JOIN (
-        SELECT bb.instance as instanceID, bb.borrow as borrowID, 
-            COUNT(*) as borrowCount, MAX(b.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-        FROM borrow_books bb
-        INNER JOIN borrows b
-            ON bb.borrow = b.id
-        GROUP BY instance
-    ) brb
-    ON t.id = brb.instanceID
-    
-
-
-    WHERE ${finalFilter} ${failSafe}
+            
+        WHERE ${finalFilter} ${failSafe}
     `
 
     const count = await strapi.connections.default.raw(query2)

@@ -26,7 +26,7 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
     `
 
     const query2 = `
-        SELECT t.id, b.id as bookID, b.title as bookTitle, b.code, 
+        SELECT t.id as instanceID, b.id as bookID, b.title as bookTitle, b.code, 
             p.id as  publisherID, p.name as publisher, c.id as categoryID, c.name as category, b.publishYear, 
             b.author, b.price, b.size, b.totalPage, t.index, brb.lastBorrowDate, brb.lastReturnDate, brb.borrowCount,
             (
@@ -37,7 +37,7 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
             ) as days_on_loan
 
         FROM instances t 
-        INNER JOIN books b
+        LEFT JOIN books b
             ON b.id = t.book
         LEFT JOIN categories c 
             ON b.category = c.id

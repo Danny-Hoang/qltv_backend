@@ -6,7 +6,9 @@
  */
 
 const findCategories=  require('./findCategories');
+const addCategory=  require('./addCategory');
 
 module.exports = {
-    findCategories
+    findCategories,
+    addCategory
 };

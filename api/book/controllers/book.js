@@ -20,6 +20,7 @@ const findAvailableBook = require('./findAvailableBook');
 const findReaderAndBorrowingBooks = require('./findReaderAndBorrowingBooks');
 const getInstanceBorrowHistory = require('./getInstanceBorrowHistory');
 const findReaderAndBorrowHistory = require('./findReaderAndBorrowHistory');
+const addInstances = require('./addInstances');
 
 
 module.exports = {
@@ -37,5 +38,6 @@ module.exports = {
     findAvailableBook,
     findReaderAndBorrowingBooks,
     getInstanceBorrowHistory,
-    findReaderAndBorrowHistory
+    findReaderAndBorrowHistory,
+    addInstances
 };
