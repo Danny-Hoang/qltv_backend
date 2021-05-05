@@ -22,7 +22,7 @@ const getAllBorrowBooks = async (ctx) => {
     }
 
 
-    let { bookTitle, reader, author, publishers, categories, page = 1, pageSize = 10, status, order, sort } = ctx.request.body.data;
+    let { bookTitle, reader, author, publishers, categories, page = 1, pageSize = 15, status, order, sort } = ctx.request.body.data;
 
 
     order = sanityOrder(order);

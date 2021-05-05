@@ -19,7 +19,7 @@ const findReaders = async (ctx) => {
     }
 
     console.log('s:',ctx.request.body)
-    let { name, readerID, page = 1, pageSize = 10, order, sort } = ctx.request.body;
+    let { name, readerID, page = 1, pageSize = 15, order, sort } = ctx.request.body;
 
     readerID = sanityNumber(readerID)
     order = sanityOrder(order);

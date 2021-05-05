@@ -16,7 +16,7 @@ const findPublishers = async(ctx, others) => {
     }
 
 
-    let { name, publisherID, page = 1, pageSize = 10, order, sort } = ctx.request.body;
+    let { name, publisherID, page = 1, pageSize = 15, order, sort } = ctx.request.body;
 
     order = sanityOrder(order);
     name = sanityString(name);

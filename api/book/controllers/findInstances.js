@@ -23,7 +23,7 @@ const findInstances = async (ctx) => {
     }
 
 
-    let { categories, author, code, publishers, bookTitle, bookID, page = 1, pageSize = 10, order, sort } = ctx.request.body;
+    let { categories, author, code, publishers, bookTitle, bookID, page = 1, pageSize = 15, order, sort } = ctx.request.body;
 
 
     order = sanityOrder(order);

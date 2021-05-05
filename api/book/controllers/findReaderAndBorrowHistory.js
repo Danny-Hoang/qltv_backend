@@ -3,7 +3,7 @@ const { sanityArrayNum, sanityOrder, sanityString } = require('../../helpers');
 
 const findReaderAndBorrowHistory = async (ctx, others) => {
 
-    let { readerID, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
+    let { readerID, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
 
     readerID = isNaN(readerID) ? 0 : Number(readerID);
 

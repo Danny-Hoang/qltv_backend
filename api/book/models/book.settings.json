@@ -46,6 +46,9 @@
     },
     "publishPlace": {
       "type": "string"
+    },
+    "importDate": {
+      "type": "date"
     }
   }
 }

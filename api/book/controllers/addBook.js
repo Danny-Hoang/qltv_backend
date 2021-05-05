@@ -45,10 +45,10 @@ const addBook = async (ctx, others) => {
                 const query = `
                 INSERT INTO books(
                     title, code, author, totalPage, category, publisher,
-                    publishPlace, publishYear, price, size,
+                    publishPlace, publishYear, price, size, importDate,
                     published_at, created_by) VALUES (
                         ${title}, ${code}, ${author}, ${totalPage}, ${category}, ${publisher},
-                        ${publishPlace}, ${publishYear}, ${price}, ${size},
+                        ${publishPlace}, ${publishYear}, ${price}, ${size}, CURRENT_DATE(),
                         CURRENT_TIMESTAMP, ${id}
                     );
                 

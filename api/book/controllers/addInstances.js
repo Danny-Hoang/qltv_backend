@@ -16,20 +16,33 @@ const addInstances = async (ctx, others) => {
                 'users-permissions'
             ].services.jwt.getToken(ctx);
             if (id) {
-             
+
                 const query = `
-                    SELECT MAX(t.index) as currentIndex FROM books b
-                    INNER JOIN instances t
-                        ON b.id = t.book
-                    
-                    WHERE b.id = ${bookID}
-                    GROUP BY t.book
+                    SELECT t.index FROM instances t
+                    WHERE t.book = ${bookID} AND t.index > 0
                 `;
 
-                console.log(query);
-                const res1 = await strapi.connections.default.raw(query);
-                const currentIndex = res1[0][0].currentIndex;
-                const nextIndexes = Array.from(Array(count).keys()).map(e => e + currentIndex + 1)
+                const res = await strapi.connections.default.raw(query);
+                console.log(res[0])
+                const currentIndexes = res[0].map(e => e.index);
+
+                const nextIndexes = []
+                for (let i = 1; i <= 250; i++) {
+                    if (nextIndexes.length === count) {
+                        break;
+                    }
+                    if (!currentIndexes.includes(i)) {
+                        nextIndexes.push(i);
+                    }
+                }
+                // let currentIndex;
+                // if(!res1[0][0].currentIndex) {
+                //     currentIndex = 0;
+                // } else {
+                //     currentIndex = res1[0][0].currentIndex;
+                // }
+
+                // const nextIndexes = Array.from(Array(count).keys()).map(e => e + currentIndex + 1)
 
                 var valueString = nextIndexes.map(index => {
                     return ` (${bookID}, ${index}, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ${id}) `
@@ -38,10 +51,9 @@ const addInstances = async (ctx, others) => {
 
                 console.log(query2)
 
-                const res = await strapi.connections.default.raw(query2)
-                ctx.send({
-                    data: res[0],
-                });
+                await strapi.connections.default.raw(query2);
+                await strapi.connections.default.raw(`UPDATE books SET importDate=CURDATE() WHERE id=${bookID}`)
+                ctx.send(nextIndexes);
 
 
             }

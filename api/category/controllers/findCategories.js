@@ -20,7 +20,7 @@ const findCategories = async (ctx, others) => {
     }
 
 
-    let { name, code, categoryID, page = 1, pageSize = 10, order, sort } = ctx.request.body;
+    let { name, code, categoryID, page = 1, pageSize = 15, order, sort } = ctx.request.body;
 
     order = sanityOrder(order);
     name = sanityString(name);

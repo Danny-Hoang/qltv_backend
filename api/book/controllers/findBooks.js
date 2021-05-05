@@ -8,7 +8,7 @@ const findBooks = async (ctx, others) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity', 'updated_at', 'barcode'].includes(colName)) {
+        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity', 'updated_at', 'importDate', 'barcode'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
 
@@ -24,7 +24,7 @@ const findBooks = async (ctx, others) => {
     }
 
 
-    let { categories, author, code, publishers, title, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
+    let { categories, author, code, publishers, title, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
 
 
     order = sanityOrder(order);
@@ -66,7 +66,7 @@ const findBooks = async (ctx, others) => {
 
     const query1 = `
         SELECT  b.id, b.title, b.publishPlace, b.code, b.publisher as publisherID, p.name as publisher, b.publishYear, b.category as categoryID, 
-                c.name as category, b.author, b.size, b.price, b.totalPage, b.updated_at, COUNT(t.book) as quantity  
+                c.name as category, b.author, b.size, b.price, b.totalPage, b.updated_at, b.importDate, COUNT(t.book) as quantity  
         FROM books b 
         ${joinCategory}
         ${joinPublisher}

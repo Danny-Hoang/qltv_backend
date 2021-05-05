@@ -24,7 +24,7 @@ const findTickets = async (ctx, others) => {
     }
 
 
-    let { reader, borrowDate, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
+    let { reader, borrowDate, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
 
 
     const readerFilter = reader ? `r.name LIKE ${sanityString(reader)}` : ''

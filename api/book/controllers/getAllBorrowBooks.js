@@ -15,7 +15,7 @@ const getAllBorrowBooks = async (ctx) => {
         if (!order) return '';
 
         if (['bookID', 'bookTitle', 'category', 'phone', 'author', 'reader', 
-                'lop', 'type', 'borrowDate', 'borrowID', 'returnDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID'
+                'lop', 'type', 'borrowDate', 'borrowID', 'returnDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID','days_on_loan'
             ].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
@@ -24,7 +24,7 @@ const getAllBorrowBooks = async (ctx) => {
     }
 
 
-    let { bookTitle, reader, author, publishers, categories, page = 1, pageSize = 10, borrowDate, returnDate, order, sort } = ctx.request.body.data;
+    let { bookTitle, reader, author, publishers, categories, page = 1, pageSize = 15, borrowDate, returnDate, order, sort } = ctx.request.body.data;
 
 
     order = sanityOrder(order);
@@ -108,7 +108,13 @@ const getAllBorrowBooks = async (ctx) => {
     const query1 = `
         SELECT b.id as bookID, t.id as instanceID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, 
             r.id as readerID, r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate, 
-            x.borrowCount, x.lastReturnDate, x.lastBorrowDate, x.lastReader, x.lastReaderID
+            x.borrowCount, x.lastReturnDate, x.lastBorrowDate, x.lastReader, x.lastReaderID,
+            (
+                CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
+                    THEN -1
+                    ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
+                END
+            ) as days_on_loan
 
         FROM borrow_books brb
 
@@ -116,7 +122,9 @@ const getAllBorrowBooks = async (ctx) => {
             ON brb.instance = t.id
         LEFT JOIN (
             SELECT instance as instanceID, 
-                COUNT(*) as borrowCount,MAX(returnDate) as lastReturnDate, MAX(bw.date) as lastBorrowDate, r.name as lastReader, r.id as lastReaderID
+                COUNT(*) as borrowCount, MAX(bw.date) as lastBorrowDate, 
+                CASE WHEN MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate,
+                r.name as lastReader, r.id as lastReaderID
             FROM borrow_books bb
             INNER JOIN borrows bw
                 ON bb.borrow = bw.id

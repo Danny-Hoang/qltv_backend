@@ -20,7 +20,7 @@ const getInstanceBorrowHistory = async (ctx) => {
     }
 
 
-    let { instanceID, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
+    let { instanceID, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
 
     let _page = isNaN(page) ? 1 : parseInt(page);
     let _pgSize = isNaN(pageSize) ? 10 : parseInt(pageSize);
@@ -29,7 +29,7 @@ const getInstanceBorrowHistory = async (ctx) => {
     order = sanityOrder(order);
 
     const query1 = `
-        SELECT b.id as bookID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, 
+        SELECT b.id as bookID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, r.id as readerID,
             r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate
 
         FROM borrow_books brb
