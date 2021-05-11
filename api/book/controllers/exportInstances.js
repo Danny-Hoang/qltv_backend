@@ -2,7 +2,7 @@
 const SqlString = require('sqlstring');
 const { sanityArrayNum, sanityOrder, sanityString, escapeString, sanityNumber, dmyToYmD } = require('../../helpers')
 
-const findInstances = async (ctx) => {
+const exportInstances = async (ctx) => {
 
     const generateOrderByQuery = (colName, order) => {
         order = sanityOrder(order);
@@ -23,7 +23,7 @@ const findInstances = async (ctx) => {
     }
 
 
-    let { categories, author, code, publishers, bookTitle, bookID, importDate, page = 1, pageSize = 15, days_on_loan, order, sort } = ctx.request.body;
+    let { categories, author, code, publishers, bookTitle, bookID, importDate, days_on_loan, order, sort } = ctx.request.body;
 
 
     order = sanityOrder(order);
@@ -31,13 +31,6 @@ const findInstances = async (ctx) => {
     author = sanityString(author);
     categories = sanityArrayNum(categories);
     publishers = sanityArrayNum(publishers);
-
-
-    let _page = isNaN(page) ? 1 : parseInt(page);
-    let _pgSize = isNaN(pageSize) ? 10 : parseInt(pageSize);
-    const off_set = (_page - 1) * _pgSize;
-
-    const pagination = _pgSize > 0 ? `LIMIT ${off_set}, ${_pgSize}` : '';
 
     let importDateFilter = ``
 
@@ -153,45 +146,12 @@ const findInstances = async (ctx) => {
         WHERE ${finalFilter} ${failSafe}
 
         ${generateOrderByQuery(sort, order)}
-        ${pagination}
 `
     console.log(query1);
     const res = await strapi.connections.default.raw(query1)
 
 
-    const query2 = `
-        SELECT COUNT(*) as total_items
-        FROM instances t 
-        LEFT JOIN 
-        (SELECT bb.instance as instanceID,  
-            COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-            FROM borrow_books bb
-            INNER JOIN borrows br
-                ON bb.borrow = br.id
-            GROUP BY bb.instance
-        )x
-            ON t.id = x.instanceID
-        LEFT JOIN borrows br
-            ON x.lastBorrowDate = br.date
-        LEFT JOIN readers r 
-            ON r.id = br.reader
-        INNER JOIN books b 
-            ON b.id = t.book
-        LEFT JOIN categories c 
-            ON b.category = c.id
-        LEFT JOIN publishers p 
-            ON p.id = b.publisher
-            
-        WHERE ${finalFilter} ${failSafe}
-    `
-
-    const count = await strapi.connections.default.raw(query2)
-    console.log(query2)
-
-    ctx.send({
-        count: parseInt(count[0][0].total_items),
-        data: res[0]
-    });
+    ctx.send(res[0]);
 }
 
-module.exports = findInstances;
+module.exports = exportInstances;

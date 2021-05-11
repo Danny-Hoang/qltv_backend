@@ -3,25 +3,19 @@ const { sanityArrayNum, sanityOrder, sanityString } = require('../../helpers');
 
 const findReaderAndBorrowHistory = async (ctx, others) => {
 
-    let { readerID, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
+    let { readerID, page = 1, pageSize = 10, order, sort } = ctx.request.body.data;
 
+    let _page = isNaN(page) ? 1 : parseInt(page);
+    let _pgSize = isNaN(pageSize) ? 10 : parseInt(pageSize);
+    const off_set = (_page - 1) * _pgSize;
+
+    const pagination = _pgSize > 0 ? `LIMIT ${off_set}, ${_pgSize}` : '';
     readerID = isNaN(readerID) ? 0 : Number(readerID);
 
-
-
     if (readerID) {
-        const res = await strapi.connections.default.raw(`
-            SELECT r.id, r.name, r.birth, r.course, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate 
-            FROM readers r
-            LEFT JOIN lops l
-                ON r.lop = l.id
-            WHERE r.id=${readerID}
-        `)
-        if (res[0] && res[0][0] && res[0][0].id) {
 
-            //lấy danh sách sách  mượn bởi cardID
-
-            const query = `
+        //lấy danh sách sách  mượn bởi readerID
+        const query = `
                 SELECT b.id as bookID, t.id as instanceID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, 
                     br.id as borrowID, br.date as borrowDate, brb.returnDate
             
@@ -43,10 +37,11 @@ const findReaderAndBorrowHistory = async (ctx, others) => {
 
                 WHERE r.id = ${readerID}
                 ORDER BY brb.returnDate ASC
+                ${pagination}
             `;
-            const res2 = await strapi.connections.default.raw(query);
+        const res = await strapi.connections.default.raw(query);
 
-            const res3 = await strapi.connections.default.raw(`
+        const res2 = await strapi.connections.default.raw(`
                 SELECT COUNT(*) as total_items
             
                 FROM borrow_books brb
@@ -58,16 +53,13 @@ const findReaderAndBorrowHistory = async (ctx, others) => {
                 WHERE r.id = ${readerID}
             `)
 
-            //trả về thông tin reader và list sách reader đó đang mượn
-            ctx.send({
-                data: res2[0],
-                reader: res[0][0],
-                count: res3[0][0].total_items
-            });
-        }
-       
-    }
-    else {
+        //trả về thông tin reader và list sách reader đó đang mượn
+        ctx.send({
+            data: res[0],
+            count: res2[0][0].total_items
+        });
+
+    } else {
         ctx.send({
             data: null,
             reader: null

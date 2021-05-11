@@ -19,7 +19,7 @@ const addBook = async (ctx, others) => {
     category = sanityNumber(category);
     publisher = sanityNumber(publisher);
     price = sanityNumber(price);
-    size = sanityNumber(size);
+    size = escapeString(size);
     quantity = sanityNumber(quantity);
     size = sanityNumber(size);
     totalPage = sanityNumber(totalPage);

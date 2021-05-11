@@ -9,6 +9,7 @@ const getPublishersAndCategories = async (ctx) => {
     const res5 = await strapi.connections.default.raw(`SELECT DISTINCT author FROM books WHERE author <> ''`);
     const res6 = await strapi.connections.default.raw(`SELECT DISTINCT code FROM books WHERE code <> ''`);
     const res7 = await strapi.connections.default.raw(`SELECT id, name FROM lops WHERE 1 <> ''`);
+    const res8 = await strapi.connections.default.raw(`SELECT DISTINCT course FROM readers WHERE course <> ''`);
 
     ctx.send({
         categories: res1[0],
@@ -18,6 +19,7 @@ const getPublishersAndCategories = async (ctx) => {
         sizes: res4[0].map(e => e.size),
         authors: res5[0].map(e => e.author),
         codes: res6[0].map(e => e.code),
+        courses: res8[0].map(e => e.course)
     });
 }
 

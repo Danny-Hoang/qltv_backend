@@ -154,6 +154,22 @@
     },
     {
       "method": "POST",
+      "path": "/exportInstances",
+      "handler": "book.exportInstances",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/exportBooks",
+      "handler": "book.exportBooks",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/books",
       "handler": "book.create",
       "config": {
