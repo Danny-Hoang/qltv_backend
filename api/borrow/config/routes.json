@@ -57,6 +57,22 @@
         }
       },
     {
+        "method": "POST",
+        "path": "/deleteBorrows",
+        "handler": "borrow.deleteBorrows",
+        "config": {
+          "policies": []
+        }
+      },
+    {
+        "method": "POST",
+        "path": "/deleteBorrowBooks",
+        "handler": "borrow.deleteBorrowBooks",
+        "config": {
+          "policies": []
+        }
+      },
+    {
       "method": "PUT",
       "path": "/borrows/:id",
       "handler": "borrow.update",

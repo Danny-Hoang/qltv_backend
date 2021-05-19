@@ -26,8 +26,32 @@
     },
     {
       "method": "POST",
+      "path": "/deleteCategories",
+      "handler": "category.deleteCategories",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/categories",
       "handler": "category.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/deleteCategories",
+      "handler": "category.deleteCategories",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/exportCategories",
+      "handler": "category.exportCategories",
       "config": {
         "policies": []
       }

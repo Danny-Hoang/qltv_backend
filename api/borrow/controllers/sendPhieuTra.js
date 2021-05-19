@@ -2,22 +2,22 @@ const { sanityArrayNum, sanityOrder, sanityString } = require('../../helpers')
 
 const sendPhieuTra = async (ctx, others) => {
 
-    let { borrowBookIDs } = ctx.request.body.data;
+    let { instanceIDs } = ctx.request.body.data;
 
-    borrowBookIDs = sanityArrayNum(borrowBookIDs);
-    console.log('borrowBookIDs', borrowBookIDs)
+    instanceIDs = sanityArrayNum(instanceIDs);
+    console.log('instanceIDs', instanceIDs)
 
-    if (borrowBookIDs && borrowBookIDs.length) {
+    if (instanceIDs && instanceIDs.length) {
         if (ctx.request && ctx.request.header && ctx.request.header.authorization) {
             const { id, isAdmin } = await strapi.plugins[
                 'users-permissions'
             ].services.jwt.getToken(ctx);
             if (id) {
               
-                var valueString = borrowBookIDs.join(", ")
+                var valueString = instanceIDs.join(", ")
                 const query = `
                           UPDATE borrow_books SET returnDate = CURRENT_TIMESTAMP
-                          WHERE id in (${valueString})
+                          WHERE ISNULL(returnDate) AND id in (${valueString})
                       `
 
                 console.log(query)

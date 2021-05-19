@@ -129,53 +129,55 @@ const findBooks = async (ctx, others) => {
     const res = await strapi.connections.default.raw(query1)
 
     const query2 = `
-        SELECT count(*) as total_items 
-        FROM books b
+        SELECT COUNT(*) as total_items
+        FROM (
+            SELECT b.id
+            FROM books b
 
-        LEFT JOIN categories c 
-            ON b.category = c.id
-        LEFT JOIN publishers p 
-            ON b.publisher = p.id
-        LEFT JOIN 
-        (
-            SELECT t.id as instanceID, t.book as bookID, t.index, x.lastBorrowDate, x.lastReturnDate,
-                IF(x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 OR ISNULL(x.lastBorrowDate), true, false) as available
-                
-            FROM instances t 
+            LEFT JOIN categories c 
+                ON b.category = c.id
+            LEFT JOIN publishers p 
+                ON b.publisher = p.id
             LEFT JOIN 
-                (SELECT bb.instance as instanceID,  
-                COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
-                case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-                FROM borrow_books bb
+            (
+                SELECT t.id as instanceID, t.book as bookID, 
+                    IF(x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 OR ISNULL(x.lastBorrowDate), true, false) as available
+                    
+                FROM instances t 
+                LEFT JOIN 
+                    (SELECT bb.instance as instanceID,  
+                    COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
+                    case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
+                    FROM borrow_books bb
+                    INNER JOIN borrows br
+                    ON bb.borrow = br.id
+                    GROUP BY bb.instance
+                    )x
+                ON t.id = x.instanceID
+
+
+                    
+            ) a
+                ON b.id = a.bookID
+            LEFT JOIN (
+                SELECT b.id, COUNT(b.id) as borrowCount from borrow_books bb 
                 INNER JOIN borrows br
-                ON bb.borrow = br.id
-                GROUP BY bb.instance
-                )x
-            ON t.id = x.instanceID
-
-
-                
-        ) a
-            ON b.id = a.bookID
-        LEFT JOIN (
-            SELECT b.id, COUNT(b.id) as borrowCount from borrow_books bb 
-            INNER JOIN borrows br
-                ON br.id = bb.borrow
-            LEFT JOIN instances t 
-                ON t.id = bb.instance
-            LEFT JOIN books b 
-                ON b.id = t.book
+                    ON br.id = bb.borrow
+                LEFT JOIN instances t 
+                    ON t.id = bb.instance
+                LEFT JOIN books b 
+                    ON b.id = t.book
+                GROUP BY b.id
+            ) x
+                ON x.id = b.id
+                WHERE ${finalFilter} ${failSafe}
             GROUP BY b.id
-        ) x
-            ON x.id = b.id
-            WHERE ${finalFilter} ${failSafe}
-        GROUP BY a.bookID
+        )xx
     `;
 
     const count = await strapi.connections.default.raw(query2)
-
     ctx.send({
-        count: parseInt(count[0][0].total_items),
+        count: parseInt(count[0][0]?.total_items || 0),
         data: res[0]
     });
 

@@ -34,6 +34,22 @@
     },
     {
       "method": "POST",
+      "path": "/deletePublishers",
+      "handler": "publisher.deletePublishers",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/exportPublishers",
+      "handler": "publisher.exportPublishers",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/findPublishers",
       "handler": "publisher.findPublishers",
       "config": {

@@ -79,7 +79,7 @@ const getInstanceBorrowHistory = async (ctx) => {
 
 
     ctx.send({
-        count: parseInt(count[0][0].total_items),
+        count: parseInt(count[0][0]?.total_items || 0),
         borrowHistory: res[0],
         instanceInfo: res2[0][0]
 

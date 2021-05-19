@@ -6,9 +6,13 @@
  */
 
 const findCategories=  require('./findCategories');
+const exportCategories=  require('./exportCategories');
 const addCategory=  require('./addCategory');
+const deleteCategories=  require('./deleteCategories');
 
 module.exports = {
     findCategories,
-    addCategory
+    addCategory,
+    exportCategories,
+    deleteCategories
 };

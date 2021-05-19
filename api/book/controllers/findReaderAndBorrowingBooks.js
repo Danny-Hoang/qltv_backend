@@ -13,7 +13,7 @@ const findReaderAndBorrowingBooks = async (ctx, others) => {
 
     if (cardID) {
         const res = await strapi.connections.default.raw(`
-            SELECT r.id, r.name, r.birth, r.course, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate 
+            SELECT r.id, r.name, r.birth, r.course, l.id as lopID, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate 
             FROM readers r
             LEFT JOIN lops l
                 ON r.lop = l.id

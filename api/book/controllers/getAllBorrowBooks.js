@@ -14,9 +14,9 @@ const getAllBorrowBooks = async (ctx) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['bookID', 'bookTitle', 'category', 'phone', 'author', 'reader', 
-                'lop', 'type', 'borrowDate', 'borrowID', 'returnDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID','days_on_loan'
-            ].includes(colName)) {
+        if (['bookID', 'bookTitle', 'category', 'phone', 'author', 'reader',
+            'lop', 'type', 'borrowDate', 'borrowID', 'returnDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID', 'days_on_loan', 'available'
+        ].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
 
@@ -70,20 +70,30 @@ const getAllBorrowBooks = async (ctx) => {
     const isInstanceIDPattern = instanceIDPattern.test(bookTitle);
 
     let titleFilter = '';
-    if(isInstanceIDPattern) {
+    if (isInstanceIDPattern) {
         const [, bookID, index] = bookTitle.match(instanceIDPattern);
-        if(bookID && index) {
+        if (bookID && index) {
             titleFilter = `(b.id = ${bookID} AND t.index=${index})`;
         }
-    } else if(bookTitle && !isNaN(bookTitle)) {
+    } else if (bookTitle && !isNaN(bookTitle)) {
         titleFilter = `b.id = ${bookTitle}`;
     } else {
         titleFilter = bookTitle ? `b.title LIKE ${sanityString(bookTitle)}` : '';
     }
 
-    const readerFilter = reader ? `
-        r.name LIKE ${sanityString(reader)}
-    ` : ''
+    let readerFilter = ``;
+
+    if (isNaN(reader)) {
+        readerFilter = reader ? `
+            r.name LIKE ${sanityString(reader)}
+        ` : ''
+
+    } else {
+        const readerID = Number(reader);
+        readerFilter = readerID ? `
+            r.id = ${readerID}
+        ` : ''
+    }
     const authorFilter = author ? `
         b.author LIKE ${author}
     ` : ''
@@ -105,17 +115,28 @@ const getAllBorrowBooks = async (ctx) => {
 
     const failSafe = finalFilter ? '' : '1';
 
+    // (
+    //     CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
+    //         THEN -1
+    //         ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
+    //     END
+    // ) as days_on_loan
     const query1 = `
         SELECT b.id as bookID, t.id as instanceID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, 
-            r.id as readerID, r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate, 
+            r.id as readerID, r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate, brb.id as borrowBookID,
             x.borrowCount, x.lastReturnDate, x.lastBorrowDate, x.lastReader, x.lastReaderID,
+            (
+                CASE WHEN ISNULL(brb.returnDate)
+                    THEN DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(br.date, '+00:00','+07:00')))
+                    ELSE DATEDIFF(DATE(CONVERT_TZ(brb.returnDate, '+00:00','+07:00')), DATE(CONVERT_TZ(br.date, '+00:00','+07:00')))
+                    END
+            ) as days_on_loan,
             (
                 CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
                     THEN -1
                     ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
                 END
-            ) as days_on_loan
-
+            ) as available
         FROM borrow_books brb
 
         INNER JOIN instances t 
@@ -187,7 +208,7 @@ const getAllBorrowBooks = async (ctx) => {
 
 
     ctx.send({
-        count: parseInt(count[0][0].total_items),
+        count: parseInt(count[0][0]?.total_items || 0),
         data: res[0]
     });
 }

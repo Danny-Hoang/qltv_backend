@@ -38,6 +38,7 @@ const findInstances = async (ctx) => {
     const off_set = (_page - 1) * _pgSize;
 
     const pagination = _pgSize > 0 ? `LIMIT ${off_set}, ${_pgSize}` : '';
+    console.log(_pgSize)
 
     let importDateFilter = ``
 
@@ -122,7 +123,7 @@ const findInstances = async (ctx) => {
         p.name as publisher, c.name as category, c.id as categoryID, p.id as publisherID,
        
     (
-        CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
+        CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 OR ISNULL(x.lastBorrowDate)
             THEN -1
             ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
         END
@@ -189,7 +190,7 @@ const findInstances = async (ctx) => {
     console.log(query2)
 
     ctx.send({
-        count: parseInt(count[0][0].total_items),
+        count: parseInt(count[0][0]?.total_items || 0),
         data: res[0]
     });
 }

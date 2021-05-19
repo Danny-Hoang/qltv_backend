@@ -162,6 +162,30 @@
     },
     {
       "method": "POST",
+      "path": "/deleteInstances",
+      "handler": "book.deleteInstances",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/findBorrowingBooksByReader",
+      "handler": "book.findBorrowingBooksByReader",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/getTicketDetails",
+      "handler": "book.getTicketDetails",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/exportBooks",
       "handler": "book.exportBooks",
       "config": {

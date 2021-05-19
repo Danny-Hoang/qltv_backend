@@ -6,8 +6,12 @@
  */
 const findPublishers = require('./findPublishers');
 const addPublisher = require('./addPublisher');
+const exportPublishers = require('./exportPublishers');
+const deletePublishers = require('./deletePublishers');
 
 module.exports = {
   findPublishers,
-  addPublisher 
+  addPublisher,
+  exportPublishers,
+  deletePublishers
 };

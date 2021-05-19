@@ -151,7 +151,9 @@ const exportInstances = async (ctx) => {
     const res = await strapi.connections.default.raw(query1)
 
 
-    ctx.send(res[0]);
+    ctx.send({
+        data: res[0]
+    });
 }
 
 module.exports = exportInstances;

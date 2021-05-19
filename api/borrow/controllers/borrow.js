@@ -7,8 +7,12 @@
  const sendPhieuMuon = require('./sendPhieuMuon');
  const sendPhieuTra = require('./sendPhieuTra');
  const findTickets = require('./findTickets');
+ const deleteBorrowBooks = require('./deleteBorrowBooks');
+ const deleteBorrows = require('./deleteBorrows');
 module.exports = {
     sendPhieuMuon,
     sendPhieuTra,
-    findTickets
+    findTickets,
+    deleteBorrowBooks,
+    deleteBorrows
 };
