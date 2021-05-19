@@ -77,9 +77,12 @@ const getInstanceBorrowHistory = async (ctx) => {
 
     const count = await strapi.connections.default.raw(query3)
 
-
+    let totalItem = 0;
+    if(count[0][0] && count[0][0].total_items) {
+        totalItem = count[0][0].total_items
+    }
     ctx.send({
-        count: parseInt(count[0][0]?.total_items || 0),
+        count: parseInt(totalItem),
         borrowHistory: res[0],
         instanceInfo: res2[0][0]
 

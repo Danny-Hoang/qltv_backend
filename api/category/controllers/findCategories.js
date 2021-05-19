@@ -77,8 +77,12 @@ const findCategories = async (ctx, others) => {
 
         const count = await strapi.connections.default.raw(query2)
 
+        let totalItem = 0;
+        if(count[0][0] && count[0][0].total_items) {
+            totalItem = count[0][0].total_items
+        }
         ctx.send({
-            count: parseInt(count[0][0].total_items),
+            count: parseInt(totalItem),
             data: res[0]
         });
     }
