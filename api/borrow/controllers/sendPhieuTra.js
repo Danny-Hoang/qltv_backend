@@ -17,7 +17,7 @@ const sendPhieuTra = async (ctx, others) => {
                 var valueString = instanceIDs.join(", ")
                 const query = `
                           UPDATE borrow_books SET returnDate = CURRENT_TIMESTAMP
-                          WHERE ISNULL(returnDate) AND id in (${valueString})
+                          WHERE ISNULL(returnDate) AND instance in (${valueString})
                       `
 
                 console.log(query)

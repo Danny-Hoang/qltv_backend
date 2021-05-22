@@ -63,6 +63,22 @@
       "config": {
         "policies": []
       }
+    },
+    {
+      "method": "POST",
+      "path": "/deleteReaders",
+      "handler": "reader.deleteReaders",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/updateReader",
+      "handler": "reader.updateReader",
+      "config": {
+        "policies": []
+      }
     }
   ]
 }

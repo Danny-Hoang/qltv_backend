@@ -11,9 +11,20 @@ const sanityOrder = (order) => {
     return '';
 }
 
+const toSqlDate = (date) => {
+    var pad = function (num) { return ('00' + num).slice(-2) };
+    var str = date.getUTCFullYear() + '-' +
+        pad(date.getUTCMonth() + 1) + '-' +
+        pad(date.getUTCDate());
+    return str;
+}
+
 const sanityDate = (d) => {
+    if (!d) return null;
     if (dayjs(d).isValid()) {
-        return SqlString.escape(d);
+        const date = dayjs(d).toDate();
+        const sqlDate = toSqlDate(date);
+        return SqlString.escape(sqlDate);
     }
 
     return null;

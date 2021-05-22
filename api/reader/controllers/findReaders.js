@@ -8,7 +8,7 @@ const findReaders = async (ctx) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['name', 'id', 'address', 'birth', 'course', 'type', 'phone', 'active', 'startDate', 'endDate', 'updated_at'].includes(colName)) {
+        if (['name', 'id', 'address', 'birth', 'course', 'type', 'phone', 'active', 'startDate', 'endDate', 'updated_at', 'borrowCount','borrowingCount'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
 
@@ -37,10 +37,36 @@ const findReaders = async (ctx) => {
     const finalFilter = [nameFilter, idFilter].filter(e => e).join(' AND ') || '1';
     console.log('sort:',sort)
     const query1 = `
-     SELECT r.id, r.name, r.birth, r.course, r.type, r.active, l.name as lop, l.id as lopID, r.address, r.phone, r.startDate, r.endDate, r.updated_at
-     FROM readers r
-     LEFT JOIN lops l
+     SELECT 
+        r.id, r.name, r.birth, r.course, r.type, r.active, r.phone, r.startDate, r.endDate, r.updated_at, r.address, 
+        l.name as lop, l.id as lopID, 
+        y.avatar, y.fileID,
+        IF(ISNULL(x.borrowCount), 0, x.borrowCount) as borrowCount, 
+        IF(ISNULL(x.borrowingCount), 0, x.borrowingCount) as borrowingCount
+    FROM readers r
+    LEFT JOIN lops l
         ON r.lop = l.id
+    LEFT JOIN (
+        SELECT upload_file_id as fileID, related_id as readerID, u.url as avatar
+        FROM upload_file_morph m
+        LEFT JOIN upload_file u
+            ON m.upload_file_id = u.id
+        WHERE related_type = 'readers' and field = 'avatar'
+    ) y
+        ON r.id = y.readerID
+
+    LEFT JOIN (
+        SELECT r.id as readerID, 
+                SUM(IF(ISNULL(bb.id), 0, 1)) as borrowCount, 
+                SUM(IF(ISNULL(bb.returnDate) AND bb.id IS NOT NULL, 1, 0)) as borrowingCount
+        FROM borrow_books bb
+        LEFT JOIN borrows br
+         	ON bb.borrow = br.id
+        LEFT JOIN readers r
+        	ON r.id = br.reader
+     	GROUP BY br.reader 
+    ) x
+        ON r.id = x.readerID
      WHERE ${finalFilter}
      ${generateOrderByQuery(sort, order)}
       LIMIT ${off_set}, ${_pgSize}

@@ -13,10 +13,14 @@ const findReaderAndBorrowingBooks = async (ctx, others) => {
 
     if (cardID) {
         const res = await strapi.connections.default.raw(`
-            SELECT r.id, r.name, r.birth, r.course, l.id as lopID, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate 
+            SELECT r.id, r.name, r.birth, r.course, l.id as lopID, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate , f.url as avatar
             FROM readers r
             LEFT JOIN lops l
                 ON r.lop = l.id
+            LEFT JOIN upload_file_morph u 
+	            ON u.related_id = r.id AND u.related_type='readers' AND u.field='avatar'
+            LEFT JOIN upload_file f 
+	            ON u.upload_file_id = f.id
             WHERE r.id=${cardID}
         `)
         console.log(res[0])

@@ -7,7 +7,13 @@
  
 const findReaders = require('./findReaders');
 const addReader = require('./addReader');
+const deleteReaders = require('./deleteReaders');
+const deleteReader = require('./deleteReader');
+const updateReader = require('./updateReader');
 module.exports = {
   findReaders,
-  addReader
+  addReader,
+  deleteReaders,
+  deleteReader,
+  updateReader
 };

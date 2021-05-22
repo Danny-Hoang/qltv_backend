@@ -170,6 +170,14 @@
     },
     {
       "method": "POST",
+      "path": "/deleteBooks",
+      "handler": "book.deleteBooks",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
       "path": "/findBorrowingBooksByReader",
       "handler": "book.findBorrowingBooksByReader",
       "config": {

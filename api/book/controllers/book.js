@@ -26,6 +26,7 @@ const exportBooks = require('./exportBooks');
 const deleteInstances = require('./deleteInstances');
 const getTicketDetails = require('./getTicketDetails');
 const findBorrowingBooksByReader = require('./findBorrowingBooksByReader');
+const deleteBooks = require('./deleteBooks');
 
 
 module.exports = {
@@ -49,5 +50,6 @@ module.exports = {
     exportBooks,
     deleteInstances,
     getTicketDetails,
-    findBorrowingBooksByReader
+    findBorrowingBooksByReader,
+    deleteBooks
 };
