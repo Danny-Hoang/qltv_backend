@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "instance_statuses",
+  "info": {
+    "name": "instance_status",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "status": {
+      "type": "integer"
+    },
+    "note": {
+      "type": "string"
+    },
+    "reportDate": {
+      "type": "date"
+    }
+  }
+}

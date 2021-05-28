@@ -5,7 +5,7 @@ const query = `
         (
             CASE WHEN (brb.borrowCount = 0 OR ISNULL(brb.lastBorrowDate) OR (brb.lastReturnDate IS NOT NULL AND brb.lastReturnDate > brb.lastBorrowDate))
                 THEN -1
-                ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(brb.lastBorrowDate, '+00:00','+07:00')))
+                ELSE DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(brb.lastBorrowDate, '+00:00','+07:00')))
             END
         ) as days_on_loan
 

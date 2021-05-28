@@ -1,0 +1,60 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/instance-statuses",
+      "handler": "instance-status.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/instance-statuses/count",
+      "handler": "instance-status.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/instance-statuses/:id",
+      "handler": "instance-status.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/instance-statuses",
+      "handler": "instance-status.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/instance-statuses/:id",
+      "handler": "instance-status.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/instance-statuses/:id",
+      "handler": "instance-status.delete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/reportBook",
+      "handler": "instance-status.reportBook",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

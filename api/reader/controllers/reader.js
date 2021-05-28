@@ -10,10 +10,12 @@ const addReader = require('./addReader');
 const deleteReaders = require('./deleteReaders');
 const deleteReader = require('./deleteReader');
 const updateReader = require('./updateReader');
+const extendEndDate = require('./extendEndDate');
 module.exports = {
   findReaders,
   addReader,
   deleteReaders,
   deleteReader,
-  updateReader
+  updateReader,
+  extendEndDate
 };

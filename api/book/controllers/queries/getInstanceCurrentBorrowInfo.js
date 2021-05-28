@@ -28,12 +28,12 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
     const query2 = `
         SELECT t.id as instanceID,  t.index, x.lastBorrowDate, x.lastReturnDate, x.borrowCount, r.name as lastReader, r.id as lastReaderID, 
             (
-                CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 THEN null
+                CASE WHEN x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID) THEN null
                 ELSE r.id
                 END
             ) as readerID,
             (
-                CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 THEN null
+                CASE WHEN x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID) THEN null
                 ELSE r.name
                 END
             ) as reader,
@@ -41,20 +41,50 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
                 p.name as publisher, c.name as category, c.id as categoryID, p.id as publisherID,
             
             (
-                CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
+                CASE WHEN x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID)
                     THEN -1
-                    ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
+                    ELSE DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
                 END
-            ) as days_on_loan
+            ) as days_on_loan,
+            (
+                IF(
+                    ISNULL(s.status), 
+                    IF(
+                        x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID), 
+                        -100, 
+                        DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays
+                           
+                    ), 
+                    IF(
+                        s.status = 200,
+                        -200,
+                        -300
+                    )
+                )
+                    
+            ) as availableStatus
         FROM instances t 
         LEFT JOIN 
-        (SELECT bb.instance as instanceID,  
-            COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
+        (
+            SELECT bb.instance as instanceID, bb.maxDays, a.lastReturnDate, a.lastBorrowDate, a.borrowCount
             FROM borrow_books bb
-            INNER JOIN borrows br
-                ON bb.borrow = br.id
-            GROUP BY bb.instance
-        )x
+            INNER JOIN (
+                SELECT bb.instance as instanceID, bb.id,
+                    COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
+                	case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
+                FROM borrow_books bb
+                INNER JOIN borrows br
+                    ON bb.borrow = br.id
+                GROUP BY bb.instance
+            ) a
+                ON bb.id = a.id AND
+                (
+                    (a.lastReturnDate IS NULL) OR  bb.returnDate = a.lastReturnDate
+                )
+            WHERE bb.instance = ${instanceID}
+
+        ) x
+       
             ON t.id = x.instanceID
         LEFT JOIN borrows br
             ON x.lastBorrowDate = br.date
@@ -66,6 +96,9 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
             ON b.category = c.id
         LEFT JOIN publishers p 
             ON p.id = b.publisher
+        LEFT JOIN instance_statuses s
+            ON s.id = t.id
+
         WHERE t.id = ${instanceID}
     `
     return query2;

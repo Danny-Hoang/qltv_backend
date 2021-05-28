@@ -41,8 +41,8 @@
       "via": "books"
     },
     "instances": {
-      "collection": "instance",
-      "via": "book"
+      "via": "book",
+      "collection": "instance"
     },
     "publishPlace": {
       "type": "string"

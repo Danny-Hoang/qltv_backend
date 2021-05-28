@@ -48,7 +48,7 @@ const sanityArrayNum = (arr = []) => {
     if (arr && Array.isArray(arr) && arr.length) {
         arr = arr.filter(e => !isNaN(e)).map(e => +e);
 
-        return arr;
+        return [...new Set(arr)];
     }
 
     return [];

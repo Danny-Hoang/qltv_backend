@@ -15,8 +15,8 @@
       "type": "integer"
     },
     "book": {
-      "via": "instances",
-      "model": "book"
+      "model": "book",
+      "via": "instances"
     },
     "importDate": {
       "type": "datetime"
@@ -25,8 +25,8 @@
       "type": "integer"
     },
     "borrow_books": {
-      "via": "instance",
-      "collection": "borrow-book"
+      "collection": "borrow-book",
+      "via": "instance"
     }
   }
 }

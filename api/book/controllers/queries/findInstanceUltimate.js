@@ -6,7 +6,7 @@ const query = `
     (
         CASE WHEN x.lastReturnDate IS NOT NULL OR x.borrowCount = 0
             THEN -1
-            ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
+            ELSE DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00')))
         END
     ) as days_on_loan
     FROM instances t 

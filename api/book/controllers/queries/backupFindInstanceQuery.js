@@ -5,7 +5,7 @@
             (
                 CASE WHEN (brb.borrowCount = 0 OR ISNULL(brb.borrowDate) OR brb.returnDate IS NOT NULL)
                     THEN -1
-                    ELSE DATEDIFF(DATE(CONVERT_TZ(CURDATE(), '+00:00','+07:00')), DATE(CONVERT_TZ(brb.borrowDate, '+00:00','+07:00')))
+                    ELSE DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(brb.borrowDate, '+00:00','+07:00')))
                 END
             ) as days_on_loan
 
