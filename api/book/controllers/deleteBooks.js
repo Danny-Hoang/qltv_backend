@@ -22,8 +22,10 @@ const deleteBooks = async (ctx) => {
             const res = await strapi.connections.default.raw(query);
             console.log('res[0]', res[0])
             if (res[0] && res[0][0] && res[0][0].total_items === '0') {
-                const res1 = await strapi.connections.default.raw(`DELETE FROM instances WHERE book IN (${bookIDs})`);
-                const res2 = await strapi.connections.default.raw(`DELETE FROM books WHERE id IN (${bookIDs})`);
+                // const res1 = await strapi.connections.default.raw(`DELETE FROM instances WHERE book IN (${bookIDs})`);
+                // const res2 = await strapi.connections.default.raw(`DELETE FROM books WHERE id IN (${bookIDs})`);
+                const res1 = await strapi.connections.default.raw(`UPDATE instances SET active=FALSE WHERE book IN (${bookIDs})`);
+                const res2 = await strapi.connections.default.raw(`UPDATE books SET active=false WHERE id IN (${bookIDs})`);
                 ctx.send({
                     data: res2[1]
                 });

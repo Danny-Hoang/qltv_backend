@@ -15,7 +15,7 @@ const getAllBorrowBooks = async (ctx) => {
         if (!order) return '';
 
         if (['bookID', 'bookTitle', 'category', 'phone', 'author', 'reader',
-            'lop', 'type', 'borrowDate', 'borrowID', 'returnDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID', 'days_on_loan','availableStatus', 'available'
+            'lop', 'type', 'borrowDate', 'borrowID', 'returnDate','expireDate', 'lastBorrowDate', 'lastReturnDate', 'lastReaderID', 'days_on_loan','availableStatus', 'available'
         ].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
@@ -48,23 +48,23 @@ const getAllBorrowBooks = async (ctx) => {
         availableStatusFilter = `s.status = 200`
     } else if(availableStatus === 'due') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL AND (
+            t.status = 1 AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL AND (
                 DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays = 0
             )
         `
     } else if(availableStatus === 'overdue') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND  x.lastReturnDate IS NULL AND (
+            t.status = 1 AND x.instanceID IS NOT NULL AND  x.lastReturnDate IS NULL AND (
                 DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays > 0
             )
         `
     } else if(availableStatus === 'borrowing') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL
+            t.status = 1 AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL
         `
     } else if(availableStatus === 'instock') {
         availableStatusFilter = `
-            s.status IS NULL AND (
+            t.status = 1 AND (
                 x.instanceID IS NULL OR x.lastReturnDate IS NOT NULL
             )
         `
@@ -156,8 +156,8 @@ const getAllBorrowBooks = async (ctx) => {
         SELECT b.id as bookID, t.id as instanceID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, 
             r.id as readerID, r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, 
             brb.returnDate, brb.id as borrowBookID, brb.maxDays,
-            x.borrowCount, x.lastReturnDate, x.lastBorrowDate, x.lastReader, x.lastReaderID, 
-            IF(ISNULL(s.status), 0 ,s.status) as status,
+            x.borrowCount, x.lastReturnDate, x.lastBorrowDate, x.lastReader, x.lastReaderID, DATE_ADD(br.date, INTERVAL brb.maxDays DAY) as expireDate,
+            t.status,
             (
                 CASE WHEN ISNULL(brb.returnDate)
                     THEN DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(br.date, '+00:00','+07:00')))
@@ -166,15 +166,19 @@ const getAllBorrowBooks = async (ctx) => {
             ) as days_on_loan,
             (
                 IF(
-                    ISNULL(s.status), 
+                    t.status = 1, 
                     IF(
                         x.lastReturnDate IS NOT NULL, 
                         -100, 
-                        DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays
+                        IF(
+                            x.maxDays IS NULL,
+                            -100,
+                            DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays
+                        )
                            
                     ), 
                     IF(
-                        s.status = 200,
+                        t.status = 200,
                         -200,
                         -300
                     )
@@ -187,27 +191,25 @@ const getAllBorrowBooks = async (ctx) => {
             ON brb.instance = t.id
         LEFT JOIN 
         (
-            SELECT bb.instance as instanceID, bb.maxDays, a.lastReturnDate, a.lastBorrowDate, a.borrowCount, r.id as lastReaderID, r.name as lastReader
-            FROM borrow_books bb
-            INNER JOIN (
-                SELECT bb.instance as instanceID, bb.id, br.reader as readerID,
-                    COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
-                    CASE WHEN MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-                FROM borrow_books bb
-                INNER JOIN borrows br
-                    ON bb.borrow = br.id
-                GROUP BY bb.instance
-            ) a
-                ON bb.id = a.id AND
-                (
-                    a.lastReturnDate IS NULL OR  bb.returnDate = a.lastReturnDate
-                )
-            INNER JOIN readers r
-                ON a.readerID = r.id
+            SELECT a.instanceID, a.borrowCount, br.id as borrowID, bb.maxDays,br.date as lastBorrowDate, a.lastReturnDate,  r.id as lastReaderID, r.name as lastReader
+	
+            FROM (
+                SELECT bb.instance as instanceID, COUNT(*) as borrowCount,
+                                CASE WHEN MAX(returnDate IS NULL) = 0 THEN MAX(returnDate) END AS lastReturnDate
+                            FROM borrow_books bb
+                    
+                            GROUP BY bb.instance
+            )a
+                INNER JOIN borrow_books bb
+                ON a.instanceID = bb.instance AND (bb.returnDate = a.lastReturnDate OR bb.returnDate IS NULL)
+                
+                INNER JOIN borrows br 
+                    ON br.id = bb.borrow
+                INNER JOIN readers r 
+                    ON r.id = br.reader
         ) x
             ON t.id = x.instanceID
-        LEFT JOIN instance_statuses s
-            ON s.id = brb.instance
+
         INNER JOIN books b 
             ON t.book = b.id 
         LEFT JOIN categories c 
@@ -273,8 +275,6 @@ const getAllBorrowBooks = async (ctx) => {
             ON r.id = br.reader
         LEFT JOIN lops l 
             ON r.lop = l.id
-        LEFT JOIN instance_statuses s
-            ON s.id = brb.instance
         
         WHERE ${finalFilter} ${failSafe}
     `

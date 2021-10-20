@@ -13,15 +13,38 @@ const findReaderAndBorrowingBooks = async (ctx, others) => {
 
     if (cardID) {
         const res = await strapi.connections.default.raw(`
-            SELECT r.id, r.name, r.birth, r.course, l.id as lopID, l.name as lop, r.type, r.address, r.phone, r.startDate, r.endDate , f.url as avatar
+            SELECT 
+                r.id, r.name, r.birth, r.course, r.type, r.active, r.phone, r.startDate, r.endDate, r.updated_at, r.address, 
+                l.name as lop, l.id as lopID, 
+                y.avatar, y.fileID,
+                IF(ISNULL(x.borrowCount), 0, x.borrowCount) as borrowCount, 
+                IF(ISNULL(x.borrowingCount), 0, x.borrowingCount) as borrowingCount
             FROM readers r
             LEFT JOIN lops l
                 ON r.lop = l.id
-            LEFT JOIN upload_file_morph u 
-	            ON u.related_id = r.id AND u.related_type='readers' AND u.field='avatar'
-            LEFT JOIN upload_file f 
-	            ON u.upload_file_id = f.id
-            WHERE r.id=${cardID}
+            LEFT JOIN (
+                SELECT upload_file_id as fileID, related_id as readerID, u.url as avatar
+                FROM upload_file_morph m
+                LEFT JOIN upload_file u
+                    ON m.upload_file_id = u.id
+                WHERE related_type = 'readers' and field = 'avatar' AND m.related_id=${cardID}
+            ) y
+                ON r.id = y.readerID
+        
+            LEFT JOIN (
+                SELECT r.id as readerID, 
+                        SUM(IF(ISNULL(bb.id), 0, 1)) as borrowCount, 
+                        SUM(IF(ISNULL(bb.returnDate) AND bb.id IS NOT NULL, 1, 0)) as borrowingCount
+                FROM borrow_books bb
+                LEFT JOIN borrows br
+                        ON bb.borrow = br.id
+                LEFT JOIN readers r
+                    ON r.id = br.reader
+                WHERE r.id = ${cardID}
+                GROUP BY br.reader 
+            ) x
+                ON r.id = x.readerID
+            WHERE r.id = ${cardID}
         `)
         console.log(res[0])
         if (res[0] && res[0][0] && res[0][0].id) {

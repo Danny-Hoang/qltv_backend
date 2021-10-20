@@ -8,7 +8,7 @@ const findBooks = async (ctx, others) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity', 
+        if (['title', 'id', 'author', 'price', 'totalPage', 'code', 'publishYear', 'size', 'quantity',
             'borrowingCount', 'instock',
             'updated_at', 'importDate', 'barcode'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
@@ -29,7 +29,7 @@ const findBooks = async (ctx, others) => {
     }
 
 
-    let { categories, author, code, publishers, title, importDate, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
+    let { categories, author, code, stockStatus, publishers, title, importDate, page = 1, pageSize = 15, order, sort } = ctx.request.body.data;
 
 
     order = sanityOrder(order);
@@ -52,6 +52,22 @@ const findBooks = async (ctx, others) => {
         titleFilter = title ? `b.title LIKE ${sanityString(title)}` : ''
     }
 
+    let stockStatusFilter = ``;
+    if (stockStatus === 'available') {
+        stockStatusFilter = `HAVING instock > 0 `
+    }
+    if (stockStatus === 'unavailable') {
+        stockStatusFilter = `HAVING instock = 0 AND quantity > 0`
+    }
+    if (stockStatus === 'borrowing') {
+        stockStatusFilter = `HAVING borrowingCount > 0`
+    }
+
+    if (stockStatus === 'draft') {
+        stockStatusFilter = 'HAVING quantity = 0'
+    }
+
+
     let importDateFilter = ``
 
     if (/^\d{2}-\d{2}-\d{4}to\d{2}-\d{2}-\d{4}$/.test(importDate)) {
@@ -68,7 +84,9 @@ const findBooks = async (ctx, others) => {
 
     const publisherFilter = publishers && publishers.length ? `p.id IN (${publishers.join(',')})` : '';
 
-    const finalFilter = [titleFilter, codeFilter, authorFilter, categoryFilter, publisherFilter, importDateFilter]
+    const filterActiveBook = `b.active = TRUE`
+
+    const finalFilter = [filterActiveBook, titleFilter, codeFilter, authorFilter, categoryFilter, publisherFilter, importDateFilter]
         .filter(e => e)
         .join(' AND ');
     console.log('final filter:');
@@ -77,23 +95,37 @@ const findBooks = async (ctx, others) => {
     const failSafe = finalFilter ? '' : '1';
 
     const query1 = `
-        SELECT b.title, b.id, a.instanceID, SUM(IF(ISNULL(a.instanceID), 0, 1)) as quantity, b.publishPlace, b.code, b.publisher as publisherID, x.borrowCount,
+        SELECT b.title, b.id, a.instanceID, 
+            SUM(
+                IF(
+                    ISNULL(a.instanceID), 0,
+                    IF(a.status = 200, 0, 1)
+                )
+            ) as quantity, 
+            b.publishPlace, b.code, b.publisher as publisherID, x.borrowCount,
                 p.name as publisher, b.publishYear, b.category as categoryID, 
                 c.name as category, b.author, b.size, b.price, b.totalPage, b.updated_at, b.importDate,
             SUM(IF(a.available OR ISNULL(a.instanceID), 0, 1)) as borrowingCount ,
-            SUM(IF(a.available, 1, 0)) as instock
+            SUM(
+                IF(a.available, 1, 0)
+            ) as instock
         FROM books b
 
         LEFT JOIN categories c 
             ON b.category = c.id
         LEFT JOIN publishers p 
             ON b.publisher = p.id
+        
         LEFT JOIN 
         (
-            SELECT t.id as instanceID, t.book as bookID, 
-                IF(x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 OR ISNULL(x.lastBorrowDate), true, false) as available
+            SELECT t.id as instanceID, t.book as bookID, t.status,
+                IF(
+                    x.instanceID IS NULL OR x.lastReturnDate IS NOT NULL OR x.lastBorrowDate IS NULL, 
+                    true, false
+                ) as available
                 
             FROM instances t 
+           
             LEFT JOIN 
                 (SELECT bb.instance as instanceID,  
                 COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
@@ -104,9 +136,7 @@ const findBooks = async (ctx, others) => {
                 GROUP BY bb.instance
                 )x
             ON t.id = x.instanceID
-
-
-                
+            WHERE t.status = 1
         ) a
             ON b.id = a.bookID
         LEFT JOIN (
@@ -122,6 +152,7 @@ const findBooks = async (ctx, others) => {
             ON x.id = b.id
             WHERE ${finalFilter} ${failSafe}
         GROUP BY b.id
+        ${stockStatusFilter}
         ${generateOrderByQuery(sort, order)}
         LIMIT ${off_set}, ${_pgSize}
     `
@@ -131,7 +162,17 @@ const findBooks = async (ctx, others) => {
     const query2 = `
         SELECT COUNT(*) as total_items
         FROM (
-            SELECT b.id
+            SELECT b.id, 
+            SUM(
+                IF(
+                    ISNULL(a.instanceID), 0,
+                    IF(a.status = 200, 0, 1)
+                )
+            ) as quantity, 
+            SUM(IF(a.available OR ISNULL(a.instanceID), 0, 1)) as borrowingCount ,
+            SUM(
+                IF(a.available, 1, 0)
+            ) as instock
             FROM books b
 
             LEFT JOIN categories c 
@@ -140,7 +181,7 @@ const findBooks = async (ctx, others) => {
                 ON b.publisher = p.id
             LEFT JOIN 
             (
-                SELECT t.id as instanceID, t.book as bookID, 
+                SELECT t.id as instanceID, t.book as bookID, t.status,
                     IF(x.lastReturnDate IS NOT NULL OR x.borrowCount = 0 OR ISNULL(x.lastBorrowDate), true, false) as available
                     
                 FROM instances t 
@@ -154,9 +195,7 @@ const findBooks = async (ctx, others) => {
                     GROUP BY bb.instance
                     )x
                 ON t.id = x.instanceID
-
-
-                    
+                WHERE t.active = TRUE
             ) a
                 ON b.id = a.bookID
             LEFT JOIN (
@@ -167,17 +206,19 @@ const findBooks = async (ctx, others) => {
                     ON t.id = bb.instance
                 LEFT JOIN books b 
                     ON b.id = t.book
+                WHERE t.active = TRUE AND b.active = TRUE
                 GROUP BY b.id
             ) x
                 ON x.id = b.id
                 WHERE ${finalFilter} ${failSafe}
             GROUP BY b.id
+            ${stockStatusFilter}
         )xx
     `;
 
     const count = await strapi.connections.default.raw(query2)
     let totalItem = 0;
-    if(count[0][0] && count[0][0].total_items) {
+    if (count[0][0] && count[0][0].total_items) {
         totalItem = count[0][0].total_items
     }
     ctx.send({

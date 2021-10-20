@@ -9,7 +9,7 @@ const findInstances = async (ctx) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['title', 'author', 'price', 'totalPage', 'code', 'publishYear', 'borrowCount', 'lastReturnDate',
+        if (['title', 'author', 'price', 'totalPage', 'code', 'publishYear', 'borrowCount', 'lastReturnDate', 'importDate',
             'lastBorrowDate', 'days_on_loan', 'availableStatus',
             'size', 'category', 'publisher'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
@@ -58,26 +58,26 @@ const findInstances = async (ctx) => {
     console.log('------------------availableStatus:-------------:', availableStatus)
     let availableStatusFilter = ``;
     if(availableStatus === 'lost') {
-        availableStatusFilter = `s.status = 200`
+        availableStatusFilter = `t.status = 200`
     } else if(availableStatus === 'due') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL AND (
+            t.status = 1 AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL AND (
                 DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays = 0
             )
         `
     } else if(availableStatus === 'overdue') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND  x.lastReturnDate IS NULL AND (
+            t.status = 1 AND x.instanceID IS NOT NULL AND  x.lastReturnDate IS NULL AND (
                 DATEDIFF(DATE(CONVERT_TZ(Now(), '+00:00','+07:00')), DATE(CONVERT_TZ(x.lastBorrowDate, '+00:00','+07:00'))) - x.maxDays > 0
             )
         `
     } else if(availableStatus === 'borrowing') {
         availableStatusFilter = `
-            s.status IS NULL AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL
+            t.status = 1 AND x.instanceID IS NOT NULL AND x.lastReturnDate IS NULL
         `
     } else if(availableStatus === 'instock') {
         availableStatusFilter = `
-            s.status IS NULL AND (
+            t.status = 1 AND (
                 x.instanceID IS NULL OR x.lastReturnDate IS NOT NULL
             )
         `
@@ -133,8 +133,10 @@ const findInstances = async (ctx) => {
 
     const publisherFilter = publishers && publishers.length ? `p.id IN (${publishers.join(',')})` : '';
 
+    const bookActiveFilter = `b.active = TRUE AND t.active = TRUE`
 
     const finalFilter = [
+        bookActiveFilter,
         titleFilter, codeFilter, authorFilter, categoryFilter, publisherFilter, bookIDFilter, 
         days_on_loanFilter, importDateFilter, availableStatusFilter
     ]
@@ -150,7 +152,7 @@ const findInstances = async (ctx) => {
 
     const query1 = `
 
-    SELECT t.id as instanceID,  t.index, x.lastBorrowDate, x.lastReturnDate, x.borrowCount, r.name as lastReader, r.id as lastReaderID, 
+    SELECT t.id as instanceID,  t.index, t.importDate, x.lastBorrowDate, x.lastReturnDate, x.borrowCount, r.name as lastReader, r.id as lastReaderID, 
     (
         CASE WHEN x.lastReturnDate IS NOT NULL OR x.instanceID IS NULL THEN null
         ELSE r.id
@@ -172,7 +174,7 @@ const findInstances = async (ctx) => {
     ) as days_on_loan,
     (
         IF(
-            ISNULL(s.status), 
+            t.status = 1, 
             IF(
                 x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID), 
                 -100, 
@@ -180,7 +182,7 @@ const findInstances = async (ctx) => {
                    
             ), 
             IF(
-                s.status = 200,
+                t.status = 200,
                 -200,
                 -300
             )
@@ -190,21 +192,22 @@ const findInstances = async (ctx) => {
     FROM instances t 
     LEFT JOIN 
     (
-        SELECT bb.instance as instanceID, bb.maxDays, a.lastReturnDate, a.lastBorrowDate, a.borrowCount
-        FROM borrow_books bb
-        INNER JOIN (
-            SELECT bb.instance as instanceID, bb.id,
-                COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
-                case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-            FROM borrow_books bb
-            INNER JOIN borrows br
-                ON bb.borrow = br.id
-            GROUP BY bb.instance
-        ) a
-            ON bb.id = a.id AND
-            (
-                (a.lastReturnDate IS NULL) OR  bb.returnDate = a.lastReturnDate
-            )
+        SELECT a.instanceID, a.borrowCount, br.id as borrowID, bb.maxDays,br.date as lastBorrowDate, a.lastReturnDate
+
+        FROM (
+            SELECT bb.instance as instanceID, COUNT(*) as borrowCount,
+                            CASE WHEN MAX(returnDate IS NULL) = 0 THEN MAX(returnDate) END AS lastReturnDate
+                        FROM borrow_books bb
+                
+                        GROUP BY bb.instance
+        )a
+            INNER JOIN borrow_books bb
+            ON a.instanceID = bb.instance AND (bb.returnDate = a.lastReturnDate OR bb.returnDate IS NULL)
+            
+            INNER JOIN borrows br 
+                ON br.id = bb.borrow
+            INNER JOIN readers r 
+                ON r.id = br.reader
     ) x
         ON t.id = x.instanceID
     LEFT JOIN borrows br
@@ -217,9 +220,7 @@ const findInstances = async (ctx) => {
         ON b.category = c.id
     LEFT JOIN publishers p 
         ON p.id = b.publisher
-    LEFT JOIN instance_statuses s
-        ON s.id = t.id
-            
+
         WHERE ${finalFilter} ${failSafe}
 
         ${generateOrderByQuery(sort, order)}
@@ -234,21 +235,22 @@ const findInstances = async (ctx) => {
         FROM instances t 
         LEFT JOIN 
         (
-            SELECT bb.instance as instanceID, bb.maxDays, a.lastReturnDate, a.lastBorrowDate, a.borrowCount
-            FROM borrow_books bb
-            INNER JOIN (
-                SELECT bb.instance as instanceID, bb.id,
-                    COUNT(*) as borrowCount, MAX(br.date) as lastBorrowDate, 
-                    case when MAX(returnDate IS NULL) = 0 THEN max(returnDate) END AS lastReturnDate
-                FROM borrow_books bb
-                INNER JOIN borrows br
-                    ON bb.borrow = br.id
-                GROUP BY bb.instance
-            ) a
-                ON bb.id = a.id AND
-                (
-                    (a.lastReturnDate IS NULL) OR  bb.returnDate = a.lastReturnDate
-                )
+            SELECT a.instanceID, a.borrowCount, br.id as borrowID, bb.maxDays,br.date as lastBorrowDate, a.lastReturnDate
+    
+            FROM (
+                SELECT bb.instance as instanceID, COUNT(*) as borrowCount,
+                                CASE WHEN MAX(returnDate IS NULL) = 0 THEN MAX(returnDate) END AS lastReturnDate
+                            FROM borrow_books bb
+                    
+                            GROUP BY bb.instance
+            )a
+                INNER JOIN borrow_books bb
+                ON a.instanceID = bb.instance AND (bb.returnDate = a.lastReturnDate OR bb.returnDate IS NULL)
+                
+                INNER JOIN borrows br 
+                    ON br.id = bb.borrow
+                INNER JOIN readers r 
+                    ON r.id = br.reader
         ) x
             ON t.id = x.instanceID
         LEFT JOIN borrows br
@@ -261,8 +263,6 @@ const findInstances = async (ctx) => {
             ON b.category = c.id
         LEFT JOIN publishers p 
             ON p.id = b.publisher
-        LEFT JOIN instance_statuses s
-            ON s.id = t.id
             
         WHERE ${finalFilter} ${failSafe}
     `

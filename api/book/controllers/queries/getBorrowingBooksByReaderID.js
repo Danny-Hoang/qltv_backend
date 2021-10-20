@@ -1,7 +1,7 @@
 let getBorrowingBooksByReaderID = (rID) => `
     SELECT b.id as bookID, t.id as instanceID, t.index, b.title as bookTitle, b.code, b.author, 
         br.date as borrowDate, br.id as borrowID, bb.id as borrowBookID, bb.returnDate, c.name as category, p.name as publisher,
-        r.id as readerID
+        r.id as readerID, DATE_ADD(br.date, INTERVAL bb.maxDays DAY) as expireDate
         
     FROM borrows br
     INNER JOIN borrow_books bb

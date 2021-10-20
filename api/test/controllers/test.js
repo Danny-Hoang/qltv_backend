@@ -5,9 +5,4 @@
  * to customize this controller
  */
 
- const reportBook = require('./reportBook');
- const undoReportBook = require('./undoReportBook');
-module.exports = {
-    reportBook,
-    undoReportBook
-};
+module.exports = {};

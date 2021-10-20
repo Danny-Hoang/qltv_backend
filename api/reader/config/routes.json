@@ -87,6 +87,14 @@
       "config": {
         "policies": []
       }
+    },
+    {
+      "method": "POST",
+      "path": "/updateReaders",
+      "handler": "reader.updateReaders",
+      "config": {
+        "policies": []
+      }
     }
   ]
 }

@@ -48,7 +48,7 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
             ) as days_on_loan,
             (
                 IF(
-                    ISNULL(s.status), 
+                    t.status = 1, 
                     IF(
                         x.lastReturnDate IS NOT NULL OR ISNULL(x.instanceID), 
                         -100, 
@@ -56,7 +56,7 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
                            
                     ), 
                     IF(
-                        s.status = 200,
+                        t.status = 200,
                         -200,
                         -300
                     )
@@ -96,8 +96,6 @@ const getInstanceCurrentBorrowInfo = (instanceID) => {
             ON b.category = c.id
         LEFT JOIN publishers p 
             ON p.id = b.publisher
-        LEFT JOIN instance_statuses s
-            ON s.id = t.id
 
         WHERE t.id = ${instanceID}
     `

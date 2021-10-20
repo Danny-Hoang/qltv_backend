@@ -19,6 +19,15 @@ const toSqlDate = (date) => {
     return str;
 }
 
+const sanityDateYMD = d => {
+    if (!d) return null;
+    if (dayjs(d).isValid() && /\d{4}-\d{2}-\d{2}/.test(d)) {
+        return d;
+    }
+
+    return null;
+}
+
 const sanityDate = (d) => {
     if (!d) return null;
     if (dayjs(d).isValid()) {
@@ -62,6 +71,12 @@ const dmyToYmD = (dmy, seperator) => {
     return `${y}-${m}-${d}`;
 }
 
+const removeAccents = (str) => {
+    return str.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+}
+
 module.exports = {
     sanityArrayNum,
     sanityOrder,
@@ -69,5 +84,7 @@ module.exports = {
     dmyToYmD,
     sanityNumber,
     escapeString,
-    sanityDate
+    sanityDate,
+    sanityDateYMD,
+    removeAccents
 }

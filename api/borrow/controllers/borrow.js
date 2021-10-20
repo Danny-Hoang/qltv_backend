@@ -9,10 +9,14 @@
  const findTickets = require('./findTickets');
  const deleteBorrowBooks = require('./deleteBorrowBooks');
  const deleteBorrows = require('./deleteBorrows');
+ const extendBorrow = require('./extendBorrow');
+ const undoReturnBook = require('./undoReturnBook');
 module.exports = {
     sendPhieuMuon,
     sendPhieuTra,
     findTickets,
     deleteBorrowBooks,
-    deleteBorrows
+    deleteBorrows,
+    extendBorrow,
+    undoReturnBook
 };

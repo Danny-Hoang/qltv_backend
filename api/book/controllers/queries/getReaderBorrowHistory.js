@@ -1,6 +1,7 @@
 let getReaderBorrowHistory = (rID) => `
     SELECT b.id as bookID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, r.name as reader, 
-        r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate
+        r.phone, l.name as lop, r.active, r.type, br.id as borrowID, br.date as borrowDate, brb.returnDate, 
+        DATE_ADD(br.date, INTERVAL brb.maxDays DAY) as expireDate
 
     FROM borrow_books brb
 

@@ -17,7 +17,7 @@ const findReaderAndBorrowHistory = async (ctx, others) => {
         //lấy danh sách sách  mượn bởi readerID
         const query = `
                 SELECT b.id as bookID, t.id as instanceID, b.title as bookTitle, b.author, c.name as category, p.name as publisher, t.index, 
-                    br.id as borrowID, br.date as borrowDate, brb.returnDate, brb.id as borrowBookID
+                    br.id as borrowID, br.date as borrowDate, brb.returnDate, brb.id as borrowBookID, DATE_ADD(br.date, INTERVAL brb.maxDays DAY) as expireDate
             
                 FROM borrow_books brb
             

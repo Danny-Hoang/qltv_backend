@@ -41,9 +41,25 @@
       }
     },
     {
+      "method": "POST",
+      "path": "/extendBorrow",
+      "handler": "borrow.extendBorrow",
+      "config": {
+        "policies": []
+      }
+    },
+    {
         "method": "POST",
         "path": "/sendPhieuMuon",
         "handler": "borrow.sendPhieuMuon",
+        "config": {
+          "policies": []
+        }
+      },
+    {
+        "method": "POST",
+        "path": "/undoReturnBook",
+        "handler": "borrow.undoReturnBook",
         "config": {
           "policies": []
         }

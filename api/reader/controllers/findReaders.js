@@ -1,5 +1,5 @@
 const SqlString = require('sqlstring');
-const { sanityArrayNum, sanityOrder, sanityString, sanityNumber } = require('../../helpers')
+const { sanityArrayNum, sanityOrder, sanityString, sanityNumber, escapeString, removeAccents } = require('../../helpers')
 
 const findReaders = async (ctx) => {
 
@@ -8,7 +8,7 @@ const findReaders = async (ctx) => {
         console.log('colName:[' + colName + ']');
         if (!order) return '';
 
-        if (['name', 'id', 'address', 'birth', 'course', 'type', 'phone', 'active', 'startDate', 'endDate', 'updated_at', 'borrowCount','borrowingCount'].includes(colName)) {
+        if (['name', 'id', 'address', 'birth', 'course', 'type', 'phone', 'active', 'startDate', 'endDate', 'updated_at', 'borrowCount', 'borrowingCount'].includes(colName)) {
             return ` ORDER BY ${SqlString.escapeId(colName)} ${order} `
         }
 
@@ -18,24 +18,35 @@ const findReaders = async (ctx) => {
         return '';
     }
 
-    console.log('s:',ctx.request.body)
+    console.log('s:', ctx.request.body)
     let { name, readerID, page = 1, pageSize = 15, order, sort } = ctx.request.body;
 
     readerID = sanityNumber(readerID)
     order = sanityOrder(order);
-    name = sanityString(name);
+
+    //nếu name đẩy lên dưới dạng number => thay thế, override lại readerID bằng name
+
+    let nameAsID = 0;
+    if (Number(name)) {
+        nameAsID = Number(name);
+    }
+
+
 
     let _page = isNaN(page) ? 1 : parseInt(page);
     let _pgSize = isNaN(pageSize) ? 10 : parseInt(pageSize);
     const off_set = (_page - 1) * _pgSize;
 
-    const nameFilter = name ? `r.name LIKE ${name}` : '';
+    // nameAsID ? `r.id = ${nameAsID}` : `(MATCH(r.name_accent) AGAINST (${escapeString(`"${removeAccents(name)}"`)} IN BOOLEAN MODE) AND r.name_accent LIKE ${sanityString(removeAccents(name))})`
+    const nameFilter = name ? (
+        nameAsID ? `r.id = ${nameAsID}` : `r.name_accent LIKE ${sanityString(removeAccents(name))}`
+    ) : '';
     const idFilter = readerID ? `r.id = ${readerID}` : '';
 
 
 
     const finalFilter = [nameFilter, idFilter].filter(e => e).join(' AND ') || '1';
-    console.log('sort:',sort)
+    console.log('sort:', sort)
     const query1 = `
      SELECT 
         r.id, r.name, r.birth, r.course, r.type, r.active, r.phone, r.startDate, r.endDate, r.updated_at, r.address, 
@@ -74,7 +85,7 @@ const findReaders = async (ctx) => {
     console.log(query1);
     const res = await strapi.connections.default.raw(query1)
 
-    if(readerID) {
+    if (readerID) {
         ctx.send({
             data: res[0][0]
         });
@@ -85,11 +96,11 @@ const findReaders = async (ctx) => {
     
          WHERE ${finalFilter}
        `;
-    
+
         const count = await strapi.connections.default.raw(query2)
-    
+
         let totalItem = 0;
-        if(count[0][0] && count[0][0].total_items) {
+        if (count[0][0] && count[0][0].total_items) {
             totalItem = count[0][0].total_items
         }
         ctx.send({

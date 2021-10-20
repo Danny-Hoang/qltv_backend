@@ -16,20 +16,20 @@ const reportBook = async (ctx, others) => {
             ].services.jwt.getToken(ctx);
             if (id) {
 
-                const query = `DELETE FROM instance_statuses WHERE id IN (${instanceIDs.join(',')})`
-                await strapi.connections.default.raw(query)
+                const query = `UPDATE instances SET status=${status}, note=${note}, reportDate=${reportDate} WHERE id IN (${instanceIDs.join(',')})`
+                const res= await strapi.connections.default.raw(query)
 
-                var valueString = instanceIDs.map(instanceID => {
-                    return ` (${instanceID}, ${status}, ${reportDate}, ${note}, CURRENT_TIMESTAMP, ${id}) `
-                }).join(", ");
+                // var valueString = instanceIDs.map(instanceID => {
+                //     return ` (${instanceID}, ${status}, ${reportDate}, ${note}, CURRENT_TIMESTAMP, ${id}) `
+                // }).join(", ");
 
-                const query2 = `
-                        INSERT INTO instance_statuses(
-                            id, status, reportDate, note, 
-                            published_at, created_by) VALUES ${valueString}`;
-                console.log(query2);
+                // const query2 = `
+                //         INSERT INTO instance_statuses(
+                //             id, status, reportDate, note, 
+                //             published_at, created_by) VALUES ${valueString}`;
+                // console.log(query2);
 
-                const res = await strapi.connections.default.raw(query2)
+                // const res = await strapi.connections.default.raw(query2)
                 ctx.send({
                     data: res[0]
                 });

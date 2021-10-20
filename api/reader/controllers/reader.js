@@ -11,11 +11,13 @@ const deleteReaders = require('./deleteReaders');
 const deleteReader = require('./deleteReader');
 const updateReader = require('./updateReader');
 const extendEndDate = require('./extendEndDate');
+const updateReaders = require('./updateReaders');
 module.exports = {
   findReaders,
   addReader,
   deleteReaders,
   deleteReader,
   updateReader,
+  updateReaders,
   extendEndDate
 };
